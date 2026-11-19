@@ -1,0 +1,251 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isTeacherOrAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'anh28524809@gmail.com' ||
+        request.auth.token.email == 'vtmmeomeo1990@gmail.com' ||
+        request.auth.token.email == 'Vtmmeomeo1990@gmai.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // 1. ResearchStage Validation Blueprint
+    function isValidResearchStage(data) {
+      return data.keys().hasAll([
+        'stageNumber', 'title', 'period', 'shortDescription', 'status', 'activities', 'updatedBy', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'stageNumber', 'title', 'period', 'shortDescription', 'status', 'activities', 'updatedBy', 'updatedAt'
+      ]) &&
+      data.stageNumber is int && data.stageNumber >= 1 && data.stageNumber <= 6 &&
+      data.title is string && data.title.size() >= 1 && data.title.size() <= 200 &&
+      data.period is string && data.period.size() >= 1 && data.period.size() <= 100 &&
+      data.shortDescription is string && data.shortDescription.size() >= 1 && data.shortDescription.size() <= 600 &&
+      data.status is string && data.status in ['completed', 'in_progress', 'verified'] &&
+      data.activities is list && data.activities.size() <= 20 &&
+      (data.activities.size() == 0 || data.activities[0] is string) &&
+      data.updatedBy is string && data.updatedBy.size() >= 1 && data.updatedBy.size() <= 128 &&
+      data.updatedAt is timestamp;
+    }
+
+    // 2. JournalEntry Validation Blueprint
+    function isValidJournalEntry(data) {
+      return data.keys().hasAll([
+        'code', 'orderIndex', 'stageNumber', 'activityName', 'actualDateOrRange',
+        'dateCertainty', 'dataOriginType', 'location', 'performer', 'collaborators',
+        'objective', 'workDone', 'method', 'actualResult', 'difficulties',
+        'solutions', 'lessonsLearned', 'nextSteps', 'evidenceSummary', 'reviewStatus',
+        'teacherComment', 'teacherConfirmationNote', 'verifiedAt', 'version',
+        'revisionHistory', 'authorUid', 'authorName', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'code', 'orderIndex', 'stageNumber', 'activityName', 'actualDateOrRange',
+        'dateCertainty', 'dataOriginType', 'location', 'performer', 'collaborators',
+        'objective', 'workDone', 'method', 'actualResult', 'difficulties',
+        'solutions', 'lessonsLearned', 'nextSteps', 'evidenceSummary', 'reviewStatus',
+        'teacherComment', 'teacherConfirmationNote', 'verifiedAt', 'version',
+        'revisionHistory', 'authorUid', 'authorName', 'createdAt', 'updatedAt'
+      ]) &&
+      data.code is string && data.code.size() >= 1 && data.code.size() <= 40 && data.code.matches('^[a-zA-Z0-9_\\-]+$') &&
+      data.orderIndex is int && data.orderIndex >= 1 && data.orderIndex <= 500 &&
+      data.stageNumber is int && data.stageNumber >= 1 && data.stageNumber <= 6 &&
+      data.activityName is string && data.activityName.size() >= 1 && data.activityName.size() <= 300 &&
+      data.actualDateOrRange is string && data.actualDateOrRange.size() >= 1 && data.actualDateOrRange.size() <= 120 &&
+      data.dateCertainty is string && data.dateCertainty in ['exact', 'range_verified', 'retrospective_estimate'] &&
+      data.dataOriginType is string && data.dataOriginType in ['original_record', 'retrospective_reconstruction', 'analytical_inference'] &&
+      data.location is string && data.location.size() >= 1 && data.location.size() <= 200 &&
+      data.performer is string && data.performer.size() >= 1 && data.performer.size() <= 200 &&
+      data.collaborators is string && data.collaborators.size() <= 200 &&
+      data.objective is string && data.objective.size() <= 1000 &&
+      data.workDone is string && data.workDone.size() >= 1 && data.workDone.size() <= 3000 &&
+      data.method is string && data.method.size() <= 1500 &&
+      data.actualResult is string && data.actualResult.size() <= 1500 &&
+      data.difficulties is string && data.difficulties.size() <= 1500 &&
+      data.solutions is string && data.solutions.size() <= 1500 &&
+      data.lessonsLearned is string && data.lessonsLearned.size() <= 1500 &&
+      data.nextSteps is string && data.nextSteps.size() <= 1000 &&
+      data.evidenceSummary is string && data.evidenceSummary.size() <= 500 &&
+      data.reviewStatus is string && data.reviewStatus in ['draft', 'pending_review', 'verified', 'revision_requested'] &&
+      data.teacherComment is string && data.teacherComment.size() <= 1500 &&
+      data.teacherConfirmationNote is string && data.teacherConfirmationNote.size() <= 200 &&
+      data.verifiedAt is string && data.verifiedAt.size() <= 100 &&
+      data.version is int && data.version >= 1 && data.version <= 100 &&
+      data.revisionHistory is list && data.revisionHistory.size() <= 20 &&
+      (data.revisionHistory.size() == 0 || data.revisionHistory[0] is string) &&
+      data.authorUid is string && data.authorUid.size() >= 1 && data.authorUid.size() <= 128 &&
+      data.authorName is string && data.authorName.size() >= 1 && data.authorName.size() <= 150 &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    // 3. EvidenceItem Validation Blueprint
+    function isValidEvidenceItem(data) {
+      return data.keys().hasAll([
+        'fileName', 'description', 'evidenceType', 'mimeType', 'fileSize',
+        'storageUrl', 'previewDataUrl', 'providerName', 'collectionDate',
+        'journalCode', 'stageNumber', 'isApprovedForJury', 'isFeatured',
+        'uploadedByUid', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'fileName', 'description', 'evidenceType', 'mimeType', 'fileSize',
+        'storageUrl', 'previewDataUrl', 'providerName', 'collectionDate',
+        'journalCode', 'stageNumber', 'isApprovedForJury', 'isFeatured',
+        'uploadedByUid', 'createdAt', 'updatedAt'
+      ]) &&
+      data.fileName is string && data.fileName.size() >= 1 && data.fileName.size() <= 250 &&
+      data.description is string && data.description.size() >= 1 && data.description.size() <= 1500 &&
+      data.evidenceType is string && data.evidenceType in ['image', 'pdf', 'word', 'excel', 'video', 'source_code', 'survey_dataset'] &&
+      data.mimeType is string && data.mimeType.size() >= 1 && data.mimeType.size() <= 120 &&
+      data.fileSize is int && data.fileSize >= 0 && data.fileSize <= 52428800 &&
+      data.storageUrl is string && data.storageUrl.size() <= 2000 &&
+      data.previewDataUrl is string && data.previewDataUrl.size() <= 350000 &&
+      data.providerName is string && data.providerName.size() >= 1 && data.providerName.size() <= 150 &&
+      data.collectionDate is string && data.collectionDate.size() >= 1 && data.collectionDate.size() <= 100 &&
+      data.journalCode is string && data.journalCode.size() >= 1 && data.journalCode.size() <= 40 &&
+      data.stageNumber is int && data.stageNumber >= 1 && data.stageNumber <= 6 &&
+      data.isApprovedForJury is bool &&
+      data.isFeatured is bool &&
+      data.uploadedByUid is string && data.uploadedByUid.size() >= 1 && data.uploadedByUid.size() <= 128 &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    // 4. AppendixDocument Validation Blueprint
+    function isValidAppendixDocument(data) {
+      return data.keys().hasAll([
+        'appendixCode', 'title', 'description', 'responsiblePerson', 'status',
+        'fileName', 'fileUrl', 'contentSummary', 'updatedLabel', 'updatedByUid', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'appendixCode', 'title', 'description', 'responsiblePerson', 'status',
+        'fileName', 'fileUrl', 'contentSummary', 'updatedLabel', 'updatedByUid', 'updatedAt'
+      ]) &&
+      data.appendixCode is string && data.appendixCode.size() >= 1 && data.appendixCode.size() <= 40 &&
+      data.title is string && data.title.size() >= 1 && data.title.size() <= 300 &&
+      data.description is string && data.description.size() >= 1 && data.description.size() <= 1500 &&
+      data.responsiblePerson is string && data.responsiblePerson.size() >= 1 && data.responsiblePerson.size() <= 150 &&
+      data.status is string && data.status in ['completed', 'verified', 'in_progress'] &&
+      data.fileName is string && data.fileName.size() >= 1 && data.fileName.size() <= 250 &&
+      data.fileUrl is string && data.fileUrl.size() <= 2000 &&
+      data.contentSummary is string && data.contentSummary.size() <= 4000 &&
+      data.updatedLabel is string && data.updatedLabel.size() <= 60 &&
+      data.updatedByUid is string && data.updatedByUid.size() >= 1 && data.updatedByUid.size() <= 128 &&
+      data.updatedAt is timestamp;
+    }
+
+    // Admins look-up collection
+    match /admins/{adminId} {
+      allow get: if isSignedIn() && isValidId(adminId) && request.auth.uid == adminId;
+      allow list, create, update, delete: if false;
+    }
+
+    // Stages collection
+    match /stages/{stageId} {
+      allow get: if isValidId(stageId) && existing().stageNumber >= 1;
+      allow list: if existing().stageNumber >= 1 && existing().stageNumber <= 6;
+      allow create: if isSignedIn() && isValidId(stageId) && isValidResearchStage(incoming()) &&
+        incoming().updatedBy == request.auth.uid &&
+        incoming().updatedAt == request.time;
+      allow update: if isSignedIn() && isValidId(stageId) && isValidResearchStage(incoming()) &&
+        incoming().stageNumber == existing().stageNumber &&
+        incoming().updatedBy == request.auth.uid &&
+        incoming().updatedAt == request.time && (
+          isTeacherOrAdmin() ||
+          incoming().diff(existing()).affectedKeys().hasOnly(['title', 'period', 'shortDescription', 'status', 'activities', 'updatedBy', 'updatedAt'])
+        );
+      allow delete: if false;
+    }
+
+    // Journals collection
+    match /journals/{journalId} {
+      allow get: if isValidId(journalId) && (existing().reviewStatus == 'verified' || isSignedIn());
+      allow list: if existing().stageNumber >= 1 && existing().stageNumber <= 6;
+      allow create: if isSignedIn() && isValidId(journalId) && isValidJournalEntry(incoming()) &&
+        incoming().authorUid == request.auth.uid &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isSignedIn() && isValidId(journalId) && isValidJournalEntry(incoming()) &&
+        incoming().code == existing().code &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isTeacherOrAdmin() ||
+          (incoming().authorUid == existing().authorUid &&
+           incoming().authorUid == request.auth.uid &&
+           incoming().diff(existing()).affectedKeys().hasOnly([
+             'stageNumber', 'activityName', 'actualDateOrRange', 'dateCertainty',
+             'dataOriginType', 'location', 'performer', 'collaborators',
+             'objective', 'workDone', 'method', 'actualResult', 'difficulties',
+             'solutions', 'lessonsLearned', 'nextSteps', 'evidenceSummary',
+             'reviewStatus', 'version', 'revisionHistory', 'updatedAt'
+           ]))
+        );
+      allow delete: if isTeacherOrAdmin() && isValidId(journalId);
+    }
+
+    // Evidences collection
+    match /evidences/{evidenceId} {
+      allow get: if isValidId(evidenceId) && (existing().isApprovedForJury == true || isSignedIn());
+      allow list: if existing().stageNumber >= 1 && existing().stageNumber <= 6;
+      allow create: if isSignedIn() && isValidId(evidenceId) && isValidEvidenceItem(incoming()) &&
+        incoming().uploadedByUid == request.auth.uid &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isSignedIn() && isValidId(evidenceId) && isValidEvidenceItem(incoming()) &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().uploadedByUid == existing().uploadedByUid &&
+        incoming().updatedAt == request.time && (
+          isTeacherOrAdmin() ||
+          (existing().uploadedByUid == request.auth.uid &&
+           incoming().isApprovedForJury == existing().isApprovedForJury &&
+           incoming().diff(existing()).affectedKeys().hasOnly([
+             'fileName', 'description', 'evidenceType', 'collectionDate',
+             'journalCode', 'stageNumber', 'previewDataUrl', 'storageUrl', 'updatedAt'
+           ]))
+        );
+      allow delete: if isValidId(evidenceId) && (isTeacherOrAdmin() || (isSignedIn() && existing().uploadedByUid == request.auth.uid));
+    }
+
+    // Appendices collection
+    match /appendices/{appendixId} {
+      allow get: if isValidId(appendixId) && existing().appendixCode.size() >= 1;
+      allow list: if existing().appendixCode.size() >= 1;
+      allow create: if isSignedIn() && isValidId(appendixId) && isValidAppendixDocument(incoming()) &&
+        incoming().updatedByUid == request.auth.uid &&
+        incoming().updatedAt == request.time;
+      allow update: if isSignedIn() && isValidId(appendixId) && isValidAppendixDocument(incoming()) &&
+        incoming().appendixCode == existing().appendixCode &&
+        incoming().updatedByUid == request.auth.uid &&
+        incoming().updatedAt == request.time && (
+          isTeacherOrAdmin() ||
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'description', 'responsiblePerson', 'status', 'fileName', 'fileUrl',
+            'contentSummary', 'updatedLabel', 'updatedByUid', 'updatedAt'
+          ])
+        );
+      allow delete: if false;
+    }
+  }
+}

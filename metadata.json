@@ -1,0 +1,6 @@
+{
+  "name": "RESET-AI | Hồ sơ và Nhật ký Nghiên cứu Khoa học",
+  "description": "Hệ thống hồ sơ khoa học điện tử và nhật ký nghiên cứu dự án RESET-AI tích hợp quy trình 3T của học sinh Trường THPT Chuyên Bắc Kạn theo Kế hoạch 5999/KH-SGDĐT.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

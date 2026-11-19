@@ -1,0 +1,177 @@
+{
+  "entities": {
+    "ResearchStage": {
+      "title": "ResearchStage",
+      "description": "One of the 6 scientific research stages of the RESET-AI project",
+      "type": "object",
+      "properties": {
+        "stageNumber": { "type": "number", "description": "Stage sequence number 1-6" },
+        "title": { "type": "string", "maxLength": 200, "description": "Name of the research stage" },
+        "period": { "type": "string", "maxLength": 100, "description": "Verified period of execution" },
+        "shortDescription": { "type": "string", "maxLength": 600, "description": "Brief summary of stage" },
+        "status": { "type": "string", "enum": ["completed", "in_progress", "verified"], "maxLength": 40 },
+        "activities": { "type": "array", "description": "Sub-activities list (max 20 items)" },
+        "updatedBy": { "type": "string", "maxLength": 128 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["stageNumber", "title", "period", "shortDescription", "status", "activities", "updatedBy", "updatedAt"]
+    },
+    "JournalEntry": {
+      "title": "JournalEntry",
+      "description": "Retrospective scientific research log entry conforming to Appendix VIII of Plan 5999",
+      "type": "object",
+      "properties": {
+        "code": { "type": "string", "maxLength": 40, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "orderIndex": { "type": "number" },
+        "stageNumber": { "type": "number" },
+        "activityName": { "type": "string", "maxLength": 300 },
+        "actualDateOrRange": { "type": "string", "maxLength": 120 },
+        "dateCertainty": { "type": "string", "enum": ["exact", "range_verified", "retrospective_estimate"], "maxLength": 40 },
+        "dataOriginType": { "type": "string", "enum": ["original_record", "retrospective_reconstruction", "analytical_inference"], "maxLength": 50 },
+        "location": { "type": "string", "maxLength": 200 },
+        "performer": { "type": "string", "maxLength": 200 },
+        "collaborators": { "type": "string", "maxLength": 200 },
+        "objective": { "type": "string", "maxLength": 1000 },
+        "workDone": { "type": "string", "maxLength": 3000 },
+        "method": { "type": "string", "maxLength": 1500 },
+        "actualResult": { "type": "string", "maxLength": 1500 },
+        "difficulties": { "type": "string", "maxLength": 1500 },
+        "solutions": { "type": "string", "maxLength": 1500 },
+        "lessonsLearned": { "type": "string", "maxLength": 1500 },
+        "nextSteps": { "type": "string", "maxLength": 1000 },
+        "evidenceSummary": { "type": "string", "maxLength": 500 },
+        "reviewStatus": { "type": "string", "enum": ["draft", "pending_review", "verified", "revision_requested"], "maxLength": 40 },
+        "teacherComment": { "type": "string", "maxLength": 1500 },
+        "teacherConfirmationNote": { "type": "string", "maxLength": 200 },
+        "verifiedAt": { "type": "string", "maxLength": 100 },
+        "version": { "type": "number" },
+        "revisionHistory": { "type": "array", "description": "Bounded list of version audit strings (max 20)" },
+        "authorUid": { "type": "string", "maxLength": 128 },
+        "authorName": { "type": "string", "maxLength": 150 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "code",
+        "orderIndex",
+        "stageNumber",
+        "activityName",
+        "actualDateOrRange",
+        "dateCertainty",
+        "dataOriginType",
+        "location",
+        "performer",
+        "collaborators",
+        "objective",
+        "workDone",
+        "method",
+        "actualResult",
+        "difficulties",
+        "solutions",
+        "lessonsLearned",
+        "nextSteps",
+        "evidenceSummary",
+        "reviewStatus",
+        "teacherComment",
+        "teacherConfirmationNote",
+        "verifiedAt",
+        "version",
+        "revisionHistory",
+        "authorUid",
+        "authorName",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "EvidenceItem": {
+      "title": "EvidenceItem",
+      "description": "Scientific evidence file or attachment metadata linked to a journal entry",
+      "type": "object",
+      "properties": {
+        "fileName": { "type": "string", "maxLength": 250 },
+        "description": { "type": "string", "maxLength": 1500 },
+        "evidenceType": { "type": "string", "enum": ["image", "pdf", "word", "excel", "video", "source_code", "survey_dataset"], "maxLength": 40 },
+        "mimeType": { "type": "string", "maxLength": 120 },
+        "fileSize": { "type": "number" },
+        "storageUrl": { "type": "string", "maxLength": 2000 },
+        "previewDataUrl": { "type": "string", "maxLength": 350000 },
+        "providerName": { "type": "string", "maxLength": 150 },
+        "collectionDate": { "type": "string", "maxLength": 100 },
+        "journalCode": { "type": "string", "maxLength": 40 },
+        "stageNumber": { "type": "number" },
+        "isApprovedForJury": { "type": "boolean" },
+        "isFeatured": { "type": "boolean" },
+        "uploadedByUid": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "fileName",
+        "description",
+        "evidenceType",
+        "mimeType",
+        "fileSize",
+        "storageUrl",
+        "previewDataUrl",
+        "providerName",
+        "collectionDate",
+        "journalCode",
+        "stageNumber",
+        "isApprovedForJury",
+        "isFeatured",
+        "uploadedByUid",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "AppendixDocument": {
+      "title": "AppendixDocument",
+      "description": "Scientific dossier appendix required by Plan 5999/KH-SGDDT",
+      "type": "object",
+      "properties": {
+        "appendixCode": { "type": "string", "maxLength": 40 },
+        "title": { "type": "string", "maxLength": 300 },
+        "description": { "type": "string", "maxLength": 1500 },
+        "responsiblePerson": { "type": "string", "maxLength": 150 },
+        "status": { "type": "string", "enum": ["completed", "verified", "in_progress"], "maxLength": 40 },
+        "fileName": { "type": "string", "maxLength": 250 },
+        "fileUrl": { "type": "string", "maxLength": 2000 },
+        "contentSummary": { "type": "string", "maxLength": 4000 },
+        "updatedLabel": { "type": "string", "maxLength": 60 },
+        "updatedByUid": { "type": "string", "maxLength": 128 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "appendixCode",
+        "title",
+        "description",
+        "responsiblePerson",
+        "status",
+        "fileName",
+        "fileUrl",
+        "contentSummary",
+        "updatedLabel",
+        "updatedByUid",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/stages/{stageId}": {
+      "schema": { "$ref": "#/entities/ResearchStage" },
+      "description": "Research stages 1 to 6 of RESET-AI project"
+    },
+    "/journals/{journalId}": {
+      "schema": { "$ref": "#/entities/JournalEntry" },
+      "description": "Research journal entries conforming to Appendix VIII"
+    },
+    "/evidences/{evidenceId}": {
+      "schema": { "$ref": "#/entities/EvidenceItem" },
+      "description": "Uploaded evidence metadata and files"
+    },
+    "/appendices/{appendixId}": {
+      "schema": { "$ref": "#/entities/AppendixDocument" },
+      "description": "Official scientific dossier appendices II through IX"
+    }
+  }
+}
